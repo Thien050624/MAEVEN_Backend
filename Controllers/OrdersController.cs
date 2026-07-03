@@ -174,6 +174,22 @@ public class OrdersController : ControllerBase
         return Ok(OrderMapper.ToDto(updatedOrder));
     }
 
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(item => item.Id == id);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.Orders.Remove(order);
+        await _dbContext.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     private IQueryable<Order> QueryOrders()
     {
         return _dbContext.Orders

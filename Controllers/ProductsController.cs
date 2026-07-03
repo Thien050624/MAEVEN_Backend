@@ -4,6 +4,7 @@ using MAEVEN.Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace MAEVEN.Backend.Controllers;
 
@@ -204,7 +205,14 @@ public class ProductsController : ControllerBase
         }
 
         _dbContext.Products.Remove(product);
-        await _dbContext.SaveChangesAsync();
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        {
+            return Conflict(new { message = "This product is used in existing orders and cannot be deleted." });
+        }
 
         return NoContent();
     }

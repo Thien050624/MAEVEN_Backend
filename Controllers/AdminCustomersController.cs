@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MAEVEN.Backend.Data;
 using MAEVEN.Backend.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -56,5 +57,26 @@ public class AdminCustomersController : ControllerBase
             .ToListAsync();
 
         return Ok(customers);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (currentUserId == id)
+        {
+            return BadRequest(new { message = "You cannot delete your own admin account." });
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == id);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.Users.Remove(user);
+        await _dbContext.SaveChangesAsync();
+
+        return NoContent();
     }
 }
