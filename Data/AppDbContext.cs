@@ -18,6 +18,9 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<ShippingAddress> ShippingAddresses => Set<ShippingAddress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -386,5 +389,69 @@ public class AppDbContext : DbContext
                 CreatedAt = new DateTime(2026, 6, 25, 0, 0, 0, DateTimeKind.Utc)
             }
         );
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.ToTable("Orders");
+            entity.HasKey(order => order.Id);
+            entity.Property(order => order.Id).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.UserId).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.Status).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.PaymentMethod).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.PaymentStatus).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.DeliveryMethod).HasMaxLength(32).IsRequired();
+            entity.Property(order => order.Subtotal).HasPrecision(18, 2);
+            entity.Property(order => order.ShippingCost).HasPrecision(18, 2);
+            entity.Property(order => order.Tax).HasPrecision(18, 2);
+            entity.Property(order => order.Total).HasPrecision(18, 2);
+            entity.Property(order => order.CreatedAt).HasColumnType("timestamp with time zone");
+
+            entity.HasOne(order => order.User)
+                .WithMany(user => user.Orders)
+                .HasForeignKey(order => order.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(order => order.Items)
+                .WithOne(item => item.Order)
+                .HasForeignKey(item => item.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(order => order.ShippingAddress)
+                .WithOne(address => address.Order)
+                .HasForeignKey<ShippingAddress>(address => address.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.ToTable("OrderItems");
+            entity.HasKey(item => item.Id);
+            entity.Property(item => item.OrderId).HasMaxLength(32).IsRequired();
+            entity.Property(item => item.ProductId).HasMaxLength(32).IsRequired();
+            entity.Property(item => item.ProductName).HasMaxLength(200).IsRequired();
+            entity.Property(item => item.ProductImage).HasColumnType("text").IsRequired();
+            entity.Property(item => item.UnitPrice).HasPrecision(18, 2);
+            entity.Property(item => item.Size).HasMaxLength(32).IsRequired();
+            entity.Property(item => item.Color).HasMaxLength(32).IsRequired();
+
+            entity.HasOne(item => item.Product)
+                .WithMany()
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ShippingAddress>(entity =>
+        {
+            entity.ToTable("ShippingAddresses");
+            entity.HasKey(address => address.Id);
+            entity.HasIndex(address => address.OrderId).IsUnique();
+            entity.Property(address => address.OrderId).HasMaxLength(32).IsRequired();
+            entity.Property(address => address.FirstName).HasMaxLength(100).IsRequired();
+            entity.Property(address => address.LastName).HasMaxLength(100).IsRequired();
+            entity.Property(address => address.Email).HasMaxLength(150).IsRequired();
+            entity.Property(address => address.Phone).HasMaxLength(32).IsRequired();
+            entity.Property(address => address.Address).HasColumnType("text").IsRequired();
+            entity.Property(address => address.Country).HasMaxLength(80).IsRequired();
+        });
     }
 }

@@ -32,4 +32,5 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
