@@ -14,6 +14,7 @@ if (!string.IsNullOrWhiteSpace(port))
 }
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi(options =>
 {
