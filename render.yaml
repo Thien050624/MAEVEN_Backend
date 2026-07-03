@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: maeven-backend
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: JwtSettings__Secret
+        sync: false
+      - key: JwtSettings__Issuer
+        value: MAEVEN.Backend
+      - key: JwtSettings__Audience
+        value: MAEVEN.Frontend
+      - key: Cors__AllowedOrigins__0
+        sync: false

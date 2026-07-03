@@ -25,22 +25,26 @@ dotnet ef database update
 dotnet run
 ```
 
+Health check:
+
+- `http://localhost:5080/api/health`
+
 Swagger is available in Development at:
 
 - `http://localhost:5080/swagger`
 - `http://localhost:5080/openapi/v1.json`
 
-## Deploy To Azure App Service
+## Deploy To Render
 
-Push this folder as its own GitHub repository, then connect it to an Azure App Service.
+Render does not provide a native .NET runtime, so this project deploys as a Docker web service.
 
-Recommended Azure settings:
+1. Push this folder as its own GitHub repository.
+2. In Render, create a new Web Service from that repository.
+3. Select Docker as the runtime.
+4. Use `/api/health` as the health check path.
+5. Add the environment variables below.
 
-- Runtime stack: `.NET 9`
-- Platform: `64 Bit`
-- Startup command: leave empty for App Service GitHub deployment
-
-Add these App Service application settings:
+Required Render environment variables:
 
 ```env
 ASPNETCORE_ENVIRONMENT=Production
@@ -51,10 +55,22 @@ JwtSettings__Audience=MAEVEN.Frontend
 Cors__AllowedOrigins__0=https://your-vercel-app.vercel.app
 ```
 
-Apply database migrations after deployment:
+If you use Render Postgres and the database is in the same Render account, prefer the internal connection string for backend-to-database traffic. If you run migrations from your local machine, use the external connection string.
+
+Apply database migrations after creating the production database:
 
 ```bash
 dotnet ef database update
 ```
 
-For production, run migrations from your local machine against the Azure PostgreSQL connection string or use a controlled CI/CD migration step.
+For production, run migrations from your local machine against the production PostgreSQL connection string or use a controlled CI/CD migration step.
+
+## Connect Vercel Frontend
+
+In Vercel, set:
+
+```env
+VITE_API_BASE_URL=https://your-render-service.onrender.com/api
+```
+
+Redeploy the Vercel project after changing this variable.
