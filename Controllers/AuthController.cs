@@ -68,6 +68,13 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        return Ok(new { message = "Logged out successfully." });
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> GetMe()
     {
