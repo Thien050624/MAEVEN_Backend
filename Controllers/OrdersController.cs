@@ -143,6 +143,37 @@ public class OrdersController : ControllerBase
         return Ok(orders.Select(OrderMapper.ToDto));
     }
 
+    [Authorize(Roles = "admin")]
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult<OrderDto>> UpdateStatus(string id, UpdateOrderStatusDto dto)
+    {
+        var normalizedStatus = NormalizeOrderStatus(dto.Status);
+        var normalizedPaymentStatus = NormalizePaymentStatus(dto.PaymentStatus);
+
+        if (normalizedStatus is null)
+        {
+            return BadRequest(new { message = "Invalid order status." });
+        }
+
+        if (normalizedPaymentStatus is null)
+        {
+            return BadRequest(new { message = "Invalid payment status." });
+        }
+
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(item => item.Id == id);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        order.Status = normalizedStatus;
+        order.PaymentStatus = normalizedPaymentStatus;
+        await _dbContext.SaveChangesAsync();
+
+        var updatedOrder = await QueryOrders().FirstAsync(item => item.Id == id);
+        return Ok(OrderMapper.ToDto(updatedOrder));
+    }
+
     private IQueryable<Order> QueryOrders()
     {
         return _dbContext.Orders
@@ -179,6 +210,32 @@ public class OrdersController : ControllerBase
             "express" => "express",
             "same-day" => "same-day",
             _ => "standard"
+        };
+    }
+
+    private static string? NormalizeOrderStatus(string status)
+    {
+        return status.Trim().ToLowerInvariant() switch
+        {
+            "pending" => "Pending",
+            "processing" => "Processing",
+            "in transit" or "in-transit" or "shipped" => "In Transit",
+            "delivered" or "completed" => "Delivered",
+            "cancelled" or "canceled" => "Cancelled",
+            _ => null
+        };
+    }
+
+    private static string? NormalizePaymentStatus(string paymentStatus)
+    {
+        return paymentStatus.Trim().ToLowerInvariant() switch
+        {
+            "pending" => "Pending",
+            "awaitingtransfer" or "awaiting transfer" or "awaiting-transfer" => "AwaitingTransfer",
+            "paid" => "Paid",
+            "failed" => "Failed",
+            "refunded" => "Refunded",
+            _ => null
         };
     }
 }

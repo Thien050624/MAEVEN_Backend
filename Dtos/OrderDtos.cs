@@ -74,6 +74,15 @@ public class OrderDto
     public List<OrderItemDto> Items { get; set; } = [];
 }
 
+public class UpdateOrderStatusDto
+{
+    [Required]
+    public string Status { get; set; } = string.Empty;
+
+    [Required]
+    public string PaymentStatus { get; set; } = string.Empty;
+}
+
 public class OrderItemDto
 {
     public string ProductId { get; set; } = string.Empty;
