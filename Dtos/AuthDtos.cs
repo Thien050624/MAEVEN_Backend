@@ -26,3 +26,8 @@ public record UserDto(
     string Role,
     string Tier
 );
+
+public record UpdateProfileRequestDto(
+    [Required] string Name,
+    string? Avatar
+);

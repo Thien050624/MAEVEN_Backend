@@ -86,6 +86,34 @@ public class AuthController : ControllerBase
         return Ok(new UserDto(user.Id, user.Email, user.Name, user.Avatar, user.Role, user.Tier));
     }
 
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<ActionResult<UserDto>> UpdateMe(UpdateProfileRequestDto dto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _dbContext.Users.FindAsync(userId);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            return BadRequest(new { message = "Name is required." });
+        }
+
+        user.Name = dto.Name.Trim();
+        user.Avatar = dto.Avatar?.Trim() ?? string.Empty;
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(new UserDto(user.Id, user.Email, user.Name, user.Avatar, user.Role, user.Tier));
+    }
+
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
