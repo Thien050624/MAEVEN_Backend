@@ -13,6 +13,10 @@ public record LoginRequestDto(
     [Required] string Password
 );
 
+public record GoogleLoginRequestDto(
+    [Required] string IdToken
+);
+
 public record AuthResponseDto(
     string Token,
     UserDto User
